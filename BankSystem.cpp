@@ -52,7 +52,8 @@ public:
 	}
 };
 
-void Transfer(Account* from, Account* to, double sum) {
+void Transfer(Account* from, Account* to) {
+	double sum;
 	cout << "What the sum you want to transfer: ";
 
 	cin >> sum;
@@ -87,8 +88,9 @@ int menu() {
 	return choice;
 }
 
-void WithdrawCash(Account* from, Account* to, double sum) {
+void WithdrawCash(Account* from, Account* to) {
 	string choice;
+	double sum;
 
 	cout << "What the amount you want to get: ";
 	cin >> sum;
@@ -167,16 +169,14 @@ void Quit(Account* check, Account* save) {
 }
 
 int main() {
-	double amount = 0;
-
 	Account* check = new CheckingAccount("check", 30000);
 	Account* save = new SavingAccount("save", 50000);
 
 	while (true) {
 		int choice = menu();
 		switch (choice) {
-		case 1: WithdrawCash(check, save, amount); break;
-		case 2: Transfer(check, save, amount); break;
+		case 1: WithdrawCash(check, save); break;
+		case 2: Transfer(check, save); break;
 		case 3: ShowTheBalance(check, save); break;
 		case 4: cout << "Wait...\n";
 			Quit(check, save);
