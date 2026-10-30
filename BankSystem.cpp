@@ -85,10 +85,16 @@ void Transfer(Account* from, Account* to) {
 
 	if ((sum + from->getComission(sum)) > from->getBalance()) {
 		cout << "No enough money\n";
+		cout << "Press 'enter' to go back\n";
+		cin.ignore();
+		cin.get();
 		return;
 	}
 	else if (sum <= 0) {
 		cout << "The amount has to be positive\n";
+		cout << "Press 'enter' to go back\n";
+		cin.ignore();
+		cin.get();
 		return;
 	}
 	from->withdraw(sum + from->getComission(sum));
@@ -97,97 +103,55 @@ void Transfer(Account* from, Account* to) {
 
 	cout << "The transfer is done: " << sum << " rubles." <<
 		" Comission: " << from->getComission(sum) << " rubles.\n";
+	cout << "Press 'enter' to go back\n";
+	cin.ignore();
+	cin.get();
 }
 
-int menu() {
-	int choice;
-	do {
-		cout << "1-WITHDRAW CASH    ";
-		cout << "2-TRANSFER\t";
-		cout << "3-SHOW THE BALANCE\t";
-		cout << "4-QUIT\n";
-		cout << "Your choice: ";
-		cin >> choice;
-		if (choice < 1 || choice > 4) cout << "Wrong choice! Try again.\n";
-	} while (choice < 1 || choice > 4);
-	return choice;
-}
-
-void WithdrawCash(Account* from, Account* to) {
-	string choice;
+void WithdrawCash(Account* account) {
 	double sum;
 
 	cout << "What the amount you want to get: ";
 	cin >> sum;
 
-	cout << "From which account you want to take money: ";
-
 	while (true) {
-		cin >> choice;
-		if (choice == "check") {
-			if (sum < 0) {
-				cout << "The amount has to be positive\n";
-				return;
-			}
-			else if (sum == 0) {
-				cout << "The amount has not to be empty\n";
-				return;
-			}
-			else if (sum > from->getBalance()) {
-				cout << "No enough money\n";
-				return;
-			}
-			else {
-				from->withdraw(sum);
-				cout << "Withdraw completed\n";
-				return;
-			}
+		if (sum < 0) {
+			cout << "The amount has to be positive\n";
+			cout << "Press 'enter' to go back\n";
+			cin.ignore();
+			cin.get();
+			return;
 		}
-
-		if (choice == "save") {
-			if (sum > to->getBalance()) {
-				cout << "No enough money\n";
-				return;
-			}
-			else if (sum == 0) {
-				cout << "The amount has not to be empty\n";
-				return;
-			}
-			else if (sum < 0) {
-				cout << "The amount has to be positive\n";
-				return;
-			}
-			else {
-				to->withdraw(sum);
-				cout << "Withdraw completed\n";
-				return;
-			}
+		else if (sum == 0) {
+			cout << "The amount has not to be empty\n";
+			cout << "Press 'enter' to go back\n";
+			cin.ignore();
+			cin.get();
+			return;
 		}
-
+		else if (sum > account->getBalance()) {
+			cout << "No enough money\n";
+			cout << "Press 'enter' to go back\n";
+			cin.ignore();
+			cin.get();
+			return;
+		}
 		else {
-			cout << "Wrong account! Try again: ";
+			account->withdraw(sum);
+			cout << "Withdraw completed!\n";
+			cout << "Press 'enter' to go back\n";
+			cin.ignore();
+			cin.get();
+			return;
 		}
 	}
 }
 
-void ShowTheBalance(Account* check, Account* save) {
-	string choice;
-	cout << "Which the account balance you want to see: ";
-
-	while (true) {
-		cin >> choice;
-		if (choice == "check") {
-			cout << "Balance: " << check->getBalance() << '\n';
-			return;
-		}
-		else if (choice == "save") {
-			cout << "Balance: " << save->getBalance() << '\n';
-			return;
-		}
-		else {
-			cout << "Wrong account! Try again: ";
-		}
-	}
+void ShowTheBalance(Account* account) {
+	cout << "Balance: " << account->getBalance() << endl;
+	cout << "Press 'enter' to go back\n";
+	cin.ignore();
+	cin.get();
 }
 
 void Quit(Account* check, Account* save) {
@@ -210,6 +174,43 @@ bool PinCheck(Account* acc, int attempt) {
 			cout << "Wrong pin-code! Try again. ";
 		}
 	}
+}
+
+void PutMoney(Account* account) {
+	double sum;
+	cout << "How much money you want to put: ";
+	cin >> sum;
+
+	if (sum <= 0) {
+		cout << "The amount has to be positive\n";
+		cout << "Press 'enter' to go back\n";
+		cin.ignore();
+		cin.get();
+		return;
+	}
+	else {
+		account->deposit(sum);
+		cout << "Deposit was successful!\n";
+		cout << "Press 'enter' to go back\n";
+		cin.ignore();
+		cin.get();
+		return;
+	}
+}
+
+int menu() {
+	int choice;
+	do {
+		cout << "1-WITHDRAW CASH    ";
+		cout << "2-PUT MONEY    ";
+		cout << "3-TRANSFER\t";
+		cout << "4-SHOW THE BALANCE\t";
+		cout << "5-QUIT\n";
+		cout << "Your choice: ";
+		cin >> choice;
+		if (choice < 1 || choice > 5) cout << "Wrong choice! Try again.\n";
+	} while (choice < 1 || choice > 5);
+	return choice;
 }
 
 int main() {
@@ -240,10 +241,31 @@ int main() {
 	while (true) {
 		int choice = menu();
 		switch (choice) {
-		case 1: WithdrawCash(check, save); break;
-		case 2: Transfer(check, save); break;
-		case 3: ShowTheBalance(check, save); break;
-		case 4: cout << "Wait...\n";
+		case 1: if (account == "check") {
+			WithdrawCash(check); break;
+		}
+			  else if (account == "save") {
+			WithdrawCash(save); break;
+		}
+		case 2: if (account == "check") {
+			PutMoney(check); break;
+		}
+			  else if (account == "save") {
+			PutMoney(save); break;
+		}
+		case 3: if (account == "check") {
+			Transfer(check, save); break;
+		}
+			  else if (account == "save") {
+			Transfer(save, check); break;
+		}
+		case 4: if (account == "check") {
+			ShowTheBalance(check); break;
+		}
+			  else if (account == "save") {
+			ShowTheBalance(save); break;
+		}
+		case 5: cout << "Wait...\n";
 			Quit(check, save);
 			return 0;
 		}
