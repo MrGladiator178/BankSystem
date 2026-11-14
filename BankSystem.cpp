@@ -1,7 +1,7 @@
 ﻿#include <iostream>
-#include <windows.h>
-#include <locale.h>
 #include <string>
+#include <vector>
+#include <sstream>
 using namespace std;
 
 class Account {
@@ -9,6 +9,7 @@ protected:
 	string id;
 	double balance;
 	int pin;
+	vector<string> operations;
 public:
 	Account(const string& id, double balance, int pin) : id(id), balance(balance), pin(pin) {}
 
@@ -24,6 +25,17 @@ public:
 		balance -= sum;
 	}
 
+	void addOperation(const string& record) {
+		operations.emplace_back(record);
+	}
+
+	void operationHistory() {
+		cout << "Operations history:" << endl;
+		for (const auto& one : operations) {
+			cout << one << endl;
+		}
+	}
+
 	virtual double getComission(double sum) const = 0;
 
 	virtual double getBalance() const = 0;
@@ -32,12 +44,19 @@ public:
 
 	virtual int getPin() const = 0;
 
+	virtual string getName() const = 0;
+
 	virtual ~Account() {}
 };
 
 class CheckingAccount : public Account {
+	string name;
 public:
 	CheckingAccount(const string& id, double balance, int pin) : Account(id, balance, pin) {}
+
+	string getName() const override {
+		return "check";
+	}
 
 	double getComission(double sum) const override {
 		return sum * 0.01;
@@ -57,8 +76,13 @@ public:
 };
 
 class SavingAccount : public Account {
+	string name;
 public:
 	SavingAccount(const string& id, double balance, int pin) : Account(id, balance, pin) {}
+
+	string getName() const override {
+		return "save";
+	}
 
 	double getComission(double sum) const override {
 		return sum * 0.005;
@@ -77,6 +101,12 @@ public:
 	}
 };
 
+void ComeBack() {
+	cout << "Press 'enter' to go back\n";
+	cin.ignore();
+	cin.get();
+}
+
 void Transfer(Account* from, Account* to) {
 	double sum;
 	cout << "What the sum you want to transfer: ";
@@ -84,17 +114,13 @@ void Transfer(Account* from, Account* to) {
 	cin >> sum;
 
 	if ((sum + from->getComission(sum)) > from->getBalance()) {
-		cout << "No enough money\n";
-		cout << "Press 'enter' to go back\n";
-		cin.ignore();
-		cin.get();
+		cout << "No enough money" << endl;
+		ComeBack();
 		return;
 	}
 	else if (sum <= 0) {
 		cout << "The amount has to be positive\n";
-		cout << "Press 'enter' to go back\n";
-		cin.ignore();
-		cin.get();
+		ComeBack();
 		return;
 	}
 	from->withdraw(sum + from->getComission(sum));
@@ -102,56 +128,59 @@ void Transfer(Account* from, Account* to) {
 	to->deposit(sum);
 
 	cout << "The transfer is done: " << sum << " rubles." <<
-		" Comission: " << from->getComission(sum) << " rubles.\n";
-	cout << "Press 'enter' to go back\n";
-	cin.ignore();
-	cin.get();
+		" Comission: " << from->getComission(sum) << " rubles." << endl;
+
+	ComeBack();
+
+	ostringstream os;
+	os << "Transfer to " << to->getName() << ' ' << sum << " rubles.";
+	from->addOperation(os.str());
 }
 
 void WithdrawCash(Account* account) {
 	double sum;
+
+	if (account->getBalance() == 0) {
+		cout << "No money to action" << endl;
+		ComeBack();
+		return;
+	}
 
 	cout << "What the amount you want to get: ";
 	cin >> sum;
 
 	while (true) {
 		if (sum < 0) {
-			cout << "The amount has to be positive\n";
-			cout << "Press 'enter' to go back\n";
-			cin.ignore();
-			cin.get();
+			cout << "The amount has to be positive" << endl;
+			ComeBack();
 			return;
 		}
 		else if (sum == 0) {
-			cout << "The amount has not to be empty\n";
-			cout << "Press 'enter' to go back\n";
-			cin.ignore();
-			cin.get();
+			cout << "The amount has not to be empty" << endl;
+			ComeBack();
 			return;
 		}
 		else if (sum > account->getBalance()) {
-			cout << "No enough money\n";
-			cout << "Press 'enter' to go back\n";
-			cin.ignore();
-			cin.get();
+			cout << "No enough money" << endl;
+			ComeBack();
 			return;
 		}
 		else {
 			account->withdraw(sum);
-			cout << "Withdraw completed!\n";
-			cout << "Press 'enter' to go back\n";
-			cin.ignore();
-			cin.get();
+			cout << "Withdraw completed!" << endl;
+			ComeBack();
+			ostringstream os;
+			os << "Cash withdrawal: " << sum << " rubles.";
+			account->addOperation(os.str());
 			return;
 		}
 	}
+
 }
 
 void ShowTheBalance(Account* account) {
 	cout << "Balance: " << account->getBalance() << endl;
-	cout << "Press 'enter' to go back\n";
-	cin.ignore();
-	cin.get();
+	ComeBack();
 }
 
 void Quit(Account* check, Account* save) {
@@ -168,7 +197,7 @@ bool PinCheck(Account* acc, int attempt) {
 		else {
 			count++;
 			if (count >= 3) {
-				cout << "This account was blocked!\n";
+				cout << "This account was blocked!" << endl;
 				return false;
 			}
 			cout << "Wrong pin-code! Try again. ";
@@ -183,19 +212,20 @@ void PutMoney(Account* account) {
 
 	if (sum <= 0) {
 		cout << "The amount has to be positive\n";
-		cout << "Press 'enter' to go back\n";
-		cin.ignore();
-		cin.get();
+		ComeBack();
 		return;
 	}
 	else {
 		account->deposit(sum);
 		cout << "Deposit was successful!\n";
-		cout << "Press 'enter' to go back\n";
-		cin.ignore();
-		cin.get();
-		return;
+		ComeBack();
 	}
+
+	ostringstream os;
+	os << "Depositing cash: " << sum << " rubles.";
+	account->addOperation(os.str());
+
+	return;
 }
 
 int menu() {
@@ -205,17 +235,18 @@ int menu() {
 		cout << "2-PUT MONEY    ";
 		cout << "3-TRANSFER\t";
 		cout << "4-SHOW THE BALANCE\t";
-		cout << "5-QUIT\n";
+		cout << "5-OPERATIONS HISTORY\t";
+		cout << "6-QUIT\n";
 		cout << "Your choice: ";
 		cin >> choice;
-		if (choice < 1 || choice > 5) cout << "Wrong choice! Try again.\n";
-	} while (choice < 1 || choice > 5);
+		if (choice < 1 || choice > 6) cout << "Wrong choice! Try again.\n";
+	} while (choice < 1 || choice > 6);
 	return choice;
 }
 
 int main() {
-	Account* check = new CheckingAccount("check", 30000, 8108);
-	Account* save = new SavingAccount("save", 50000, 7777);
+	Account* check = new CheckingAccount("check", 30000, 1234);
+	Account* save = new SavingAccount("save", 50000, 1111);
 
 	string account;
 	int pin = 0;
@@ -265,7 +296,13 @@ int main() {
 			  else if (account == "save") {
 			ShowTheBalance(save); break;
 		}
-		case 5: cout << "Wait...\n";
+		case 5: if (account == "check") {
+			check->operationHistory(); break;
+		}
+			  else if (account == "save") {
+			save->operationHistory(); break;
+		}
+		case 6: cout << "Wait...\n";
 			Quit(check, save);
 			return 0;
 		}
